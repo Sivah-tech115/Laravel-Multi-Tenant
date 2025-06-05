@@ -147,6 +147,7 @@ class WebsiteController extends Controller
         $categorySessionKey = "merchant_{$this->langCode}_{$categorySlug}";
         $category = session()->get($categorySessionKey);
 
+        
         if (!$category) {
             $category = Merchant::where('slug', $categorySlug)->firstOrFail();
             session()->put($categorySessionKey, $category);
