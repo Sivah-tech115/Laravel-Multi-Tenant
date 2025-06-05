@@ -22,9 +22,27 @@
                     <li class="nav-item ">
                         <a href="{{route('import.form')}}" class="nav-link">
                             <span class="pcoded-micon">
-                                <i class="feather icon-user"></i>
+                                <i class="feather icon-layers"></i>
                             </span>
                             <span class="pcoded-mtext">Feed Import</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item ">
+                        <a href="{{route('merchants.all')}}" class="nav-link">
+                            <span class="pcoded-micon">
+                                <i class="feather icon-user"></i>
+                            </span>
+                            <span class="pcoded-mtext">Merchant</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item ">
+                        <a href="{{route('products.index')}}" class="nav-link">
+                            <span class="pcoded-micon">
+                                <i class="feather icon-award"></i>
+                            </span>
+                            <span class="pcoded-mtext">Offers</span>
                         </a>
                     </li>
       

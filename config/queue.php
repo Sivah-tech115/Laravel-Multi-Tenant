@@ -40,6 +40,16 @@ return [
             'queue' => 'default',
             'retry_after' => 90,
             'after_commit' => false,
+            'central' => true,
+        ],
+
+        // 👇 Tenant-specific queue connection (uses tenant DB)
+        'tenant' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'default',
+            'retry_after' => 90,
+            'connection' => null, // we will set it dynamically
         ],
 
         'beanstalkd' => [

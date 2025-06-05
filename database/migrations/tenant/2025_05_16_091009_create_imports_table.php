@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('imports', function (Blueprint $table) {
             $table->id();
-            $table->string('zip_url');
+            $table->text('zip_url');
             $table->enum('status', ['pending', 'processing', 'completed', 'failed'])->default('pending');
-            $table->text('log')->nullable(); // optional to store logs or errors
+            $table->text('log')->nullable();
+            $table->string('reimport_status')->default('0');
             $table->timestamps();
         });
     }

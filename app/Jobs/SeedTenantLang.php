@@ -26,19 +26,28 @@ class SeedTenantLang implements ShouldQueue
     public function handle(): void
     {
         $translations = include resource_path('lang/tenant/en_translations.php');
-
+    
         $insertData = [];
         foreach ($translations as $key => $value) {
-            $insertData[] = [
-                'locale' => 'en',
-                'key' => $key,
-                'value' => $value,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            $exists = DB::table('translations')
+                ->where('locale', 'en')
+                ->where('key', $key)
+                ->exists();
+    
+            if (!$exists) {
+                $insertData[] = [
+                    'locale' => 'en',
+                    'key' => $key,
+                    'value' => $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
         }
-
-        DB::table('translations')->insert($insertData);
-
+    
+        if (!empty($insertData)) {
+            DB::table('translations')->insert($insertData);
+        }
     }
+    
 }

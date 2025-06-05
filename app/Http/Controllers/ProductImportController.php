@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Jobs\ImportAwinFeedJob;
 use App\Models\Import;
 
 class ProductImportController extends Controller
@@ -12,8 +11,7 @@ class ProductImportController extends Controller
     {
         $imports = Import::orderBy('created_at', 'desc')->get();
 
-        // dd($imports);
-        return view('app.feed.import', compact('imports'));
+        return view('app.adminPanel.feed.import', compact('imports'));
     }
 
     public function import(Request $request)
@@ -29,10 +27,20 @@ class ProductImportController extends Controller
             'status' => 'pending',
         ]);
 
-
-        // Dispatch the import job to the queue
-        ImportAwinFeedJob::dispatch($zipUrl, $import->id);
-
-        return back()->with('success', 'Import started. Import ID: ' . $import->id);
+        return back()->with('success', 'Import started');
     }
+
+    public function import_reset($id)
+    {
+        $import = Import::findOrFail($id);
+        $import->status = 'pending';
+        $import->log = 'import restarted';
+        $import->reimport_status = '1';
+        $import->save();
+    
+        return redirect()->back()->with('success', 'Feed import restart successfully.');
+    }
+    
+
+
 }

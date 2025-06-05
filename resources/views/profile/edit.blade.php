@@ -51,7 +51,7 @@
                         @csrf
                         <input type="hidden" name="changeprofile" class="form-control" value="changeprofile">
                         <div class="row g-3">
-                            <div class="col-md-12">
+                            <!-- <div class="col-md-12">
                                 <label class="form-label">Profile Image</label><br>
                                 @if($user && $user->image)
                                 <img id="imagePreview" src="{{ asset('storage/' . $user->image) }}" class="profile-img-preview" alt="Avatar">
@@ -60,7 +60,7 @@
                                 @endif
                                 <input type="file" name="image" id="imageInput" class="form-control mt-2">
                                 @error('image') <small class="text-danger">{{ $message }}</small> @enderror
-                            </div>
+                            </div> -->
                             <div class="col-md-12">
                                 <label class="form-label">Name</label>
                                 <input type="text" name="fname" value="{{ old('fname', $user->name) }}" class="form-control">

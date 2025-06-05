@@ -117,14 +117,6 @@
                             <i class="icon feather icon-user"></i>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end profile-notification">
-                            <div class="pro-head">
-                                @if(auth()->check())
-                                <img src="{{ auth()->user()->image ? asset('storage/' . auth()->user()->image) : asset('assets/images/user/avatar-1.jpg') }}"
-                                    class="img-radius" alt="User-Profile-Image">
-                                @endif
-                                <span>{{ Auth::user()->name }}</span>
-
-                            </div>
                             <ul class="pro-body">
                                 <li><a href="{{ route('profile.edit') }}" class="dropdown-item"><i class="feather icon-user"></i> Profile</a>
                                 </li>

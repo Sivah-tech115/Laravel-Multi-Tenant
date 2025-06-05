@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Import extends Model
 {
     use HasFactory;
-    protected $fillable = ['zip_url', 'status', 'log'];
+    protected $fillable = ['zip_url', 'status', 'log', 'reimport_status'];
 }

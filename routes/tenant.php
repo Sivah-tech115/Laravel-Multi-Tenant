@@ -10,8 +10,10 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Http\Controllers\ProductImportController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Website\WebsiteController;
 use App\Jobs\SeedTenantLang;
+use Illuminate\Support\Facades\View;
 /*
 |--------------------------------------------------------------------------
 | Tenant Routes
@@ -37,11 +39,21 @@ Route::middleware([
     */
 
 
-        Route::get('/', [WebsiteController::class, 'index']);
+    Route::get('/', [WebsiteController::class, 'index'])->name('tanant.website');
+    Route::get('product-category/{categorySlug}/{subcategorySlug2?}/{subcategorySlug3?}', [WebsiteController::class, 'categoryProducts'])->name('category.product');
 
-
+    Route::get('product/{productSlug}', [WebsiteController::class, 'singleProduct'])->name('single.product');
 
     Route::get('/dashboard', [ProductImportController::class, 'showForm'])->middleware(['auth', 'verified'])->name('dashboard');
+
+    Route::get('/product-categories', [WebsiteController::class, 'AllCategories'])->name('categories.all');
+
+
+    Route::view('/privacy-policy', 'tenant.welcome')->name('welcome');
+
+     Route::get('/privacy-policy', function () {
+        return view('app.website.pages.privacy-policy');
+    })->name('privacy.policy');
 
 
     Route::middleware('auth')->group(function () {
@@ -50,12 +62,14 @@ Route::middleware([
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
         Route::group(['middleware' => ['role:admin']], function () {
-
-
-
             Route::resource('users', UserController::class);
             Route::get('/import', [ProductImportController::class, 'showForm'])->name('import.form');
             Route::post('/import', [ProductImportController::class, 'import'])->name('import.submit');
+            Route::post('/import/reset/{id}', [ProductImportController::class, 'import_reset'])->name('import.reset');
+            Route::get('/merchants', [AdminController::class, 'showMerchant'])->name('merchants.all');
+            Route::post('merchants/{id}/upload-image', [AdminController::class, 'uploadImage'])->name('merchant.uploadImage');
+            Route::get('/offers', [AdminController::class, 'AllOffers'])->name('products.index');
+            Route::get('/offerss', [AdminController::class, 'AllOfferss'])->name('products.ajax');
         });
     });
 

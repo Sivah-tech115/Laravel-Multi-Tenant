@@ -46,7 +46,7 @@ return [
             'driver' => 'database',
             'table' => 'cache',
             'connection' => null,
-            'lock_connection' => null,
+            // 'lock_connection' => null,
         ],
 
         'file' => [
