@@ -100,7 +100,7 @@ class ProcessPendingImports extends Command
             }
 
 
-            // $extractFolder = storage_path('app/awinfeed_extract_1749016847');
+            // $extractFolder = storage_path('app/awinfeed_extract_1749189059');
 
             $csvFiles = glob($extractFolder . '/*.csv');
             if (empty($csvFiles)) {
@@ -248,7 +248,7 @@ class ProcessPendingImports extends Command
                             $productBatch[] = [
                                 'aw_product_id' => $record['aw_product_id'],
                                 'import_id' => $import->id,
-                                'slug' => Str::slug($productTitle),
+                                'slug' => Str::slug($productTitle) .'-'. substr($record['aw_product_id'], -3),
                                 'description' => $productDescription,
                                 'meta_title' => $productTitle,
                                 'meta_description' => $productDescription ? Str::words($productDescription, 30, '...') : null,

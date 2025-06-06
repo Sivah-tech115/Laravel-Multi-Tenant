@@ -102,7 +102,7 @@ class WebsiteController extends Controller
                     break;
             }
 
-            $products = $queryBuilder->paginate(10);
+            $products = $queryBuilder->paginate(12);
 
             session()->put($sessionKey, $products);
         }
@@ -147,7 +147,7 @@ class WebsiteController extends Controller
         $categorySessionKey = "merchant_{$this->langCode}_{$categorySlug}";
         $category = session()->get($categorySessionKey);
 
-        
+
         if (!$category) {
             $category = Merchant::where('slug', $categorySlug)->firstOrFail();
             session()->put($categorySessionKey, $category);
@@ -226,7 +226,7 @@ class WebsiteController extends Controller
                     break;
             }
 
-            $products = $query->paginate(10);
+            $products = $query->paginate(12);
             session()->put($productsSessionKey, $products);
         }
 

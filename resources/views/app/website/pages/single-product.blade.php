@@ -1,5 +1,8 @@
 @extends('app.website.website-layouts.main')
 @section('content')
+@section('meta_title', $product->meta_title ?? 'offers | Compraspesa')
+@section('meta_keywords', $product->keyword ?? 'offers | Compraspesa')
+@section('meta_description', $product->meta_description ?? 'offers | Compraspesa')
 
 <section class="single_pro_section">
     <div class="container">

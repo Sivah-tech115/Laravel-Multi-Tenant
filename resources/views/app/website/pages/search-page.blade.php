@@ -31,7 +31,6 @@
                         <option value="highest_price" {{ request('sorting') == 'highest_price' ? 'selected' : '' }}>{{ t('shop.sort.highest_price') }}</option>
                     </select>
                 </form>
-
             </div>
         </div>
 
@@ -47,7 +46,7 @@
                     <h5><a href="{{ route('single.product', ['productSlug' => $item->slug]) }}">{{ $item->product_name }}</a></h5>
                     <span class="pro_price regu_price">€{{ $item->search_price }}</span>
                     <span class="pro_price regu_price" style="display: none;">{{ $item->id }}</span>
-                    <a href="{{ $item->aw_deep_link }}" target="_blank">{{ t('product.view_offer') }}</a>
+                    <a href="{{ $item->aw_deep_link }}" target="_blank" class="btn">{{ t('product.view_offer') }}</a>
                 </div>
             </li>
             @empty

@@ -22,7 +22,7 @@ class ProductImportController extends Controller
 
         $zipUrl = $request->input('zip_url');
 
-        $import = Import::create([
+        Import::create([
             'zip_url' => $zipUrl,
             'status' => 'pending',
         ]);

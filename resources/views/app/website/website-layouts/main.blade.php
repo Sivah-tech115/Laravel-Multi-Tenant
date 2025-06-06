@@ -6,12 +6,15 @@
     <title>Shop - Compraspesa</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="title" content="@yield('meta_title', 'Compraspesa')" />
+    <meta name="description" content="@yield('meta_description', 'Compraspesa')" />
+    <meta name="keywords" content="@yield('meta_keywords', 'Compraspesa')" />
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="shortcut icon" href="assets/images/favicon.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick-theme.min.css" />
-  
-  
     <link rel="stylesheet" href="{{ asset('../../tenant/assets/css/style.css') }}">
 
 </head>

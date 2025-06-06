@@ -48,10 +48,9 @@ Route::middleware([
 
     Route::get('/product-categories', [WebsiteController::class, 'AllCategories'])->name('categories.all');
 
-
     Route::view('/privacy-policy', 'tenant.welcome')->name('welcome');
 
-     Route::get('/privacy-policy', function () {
+    Route::get('/privacy-policy', function () {
         return view('app.website.pages.privacy-policy');
     })->name('privacy.policy');
 
