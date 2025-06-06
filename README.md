@@ -24,7 +24,7 @@ Open your favourite terminal of and follow the instructions below to run the com
 Clone the github repository by running the following command
 
 ```
-git clone https://github.com/Sivah-tech115/laravel-tenancy.git
+git clone https://github.com/Sivah-tech115/Laravel-Multi-Tenant.git
 ```
 
 Navigate to the project directory
