@@ -11,8 +11,8 @@
         <div class="navbar-wrapper">
             <div class="navbar-brand header-logo">
                 <a href="#" class="b-brand">
-                    <img src="{{url('assets/images/comp-Logo.png')}}" alt="" class="logo images">
-                    <img src="{{url('assets/images/comp-Logo.png')}}" alt="" class="logo-thumb images">
+                    <img src="{{ asset('../../tenant/assets/images/logo.webp') }}" alt="" class="logo images">
+                    <img src="{{ asset('../../tenant/assets/images/logo.webp') }}" alt="" class="logo-thumb images">
                 </a>
                 <a class="mobile-menu" id="mobile-collapse" href="#!"><span></span></a>
             </div>

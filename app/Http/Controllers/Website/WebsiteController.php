@@ -132,7 +132,6 @@ class WebsiteController extends Controller
         // dd($merchants->toArray());
 
         if ($query) {
-
             return view('app.website.pages.search-page', compact('products', 'merchantquery', 'merchants'));
         }
 

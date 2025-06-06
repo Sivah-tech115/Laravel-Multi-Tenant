@@ -15,7 +15,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5>Tenants</h5>
-                    <a href="{{ route('tenants.create') }}">Add Tenant</a>
+                    <a href="{{ route('tenants.create') }}" target="_blank" class="btn btn-primary btn-sm" >Add Tenant</a>
                 </div>
                 <div class="card-body">
                     <div class="relative overflow-x-auto">

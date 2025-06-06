@@ -3,8 +3,8 @@
         <div class="m-header">
             <a class="mobile-menu" id="mobile-collapse1" href="#!"><span></span></a>
             <a href="#" class="b-brand">
-                <img src="{{asset('assets/images/Layer-22.png')}}" alt="" class="logo images">
-                <img src="{{asset('assets/images/Layer-22.png')}}" alt="" class="logo-thumb images">
+                <img src="{{ asset('../../tenant/assets/images/logo.webp') }}" alt="" class="logo images">
+                <img src="{{ asset('../../tenant/assets/images/logo.webp') }}" alt="" class="logo-thumb images">
             </a>
         </div>
         <a class="mobile-menu" id="mobile-header" href="#!">

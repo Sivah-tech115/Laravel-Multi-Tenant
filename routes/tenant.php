@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Website\WebsiteController;
+use App\Http\Controllers\SeoSettingController;
 use App\Jobs\SeedTenantLang;
 use Illuminate\Support\Facades\View;
 /*
@@ -69,6 +70,12 @@ Route::middleware([
             Route::post('merchants/{id}/upload-image', [AdminController::class, 'uploadImage'])->name('merchant.uploadImage');
             Route::get('/offers', [AdminController::class, 'AllOffers'])->name('products.index');
             Route::get('/offerss', [AdminController::class, 'AllOfferss'])->name('products.ajax');
+
+            Route::get('seo-settings', [SeoSettingController::class, 'edit'])->name('seo.edit');
+            Route::put('seo-settings', [SeoSettingController::class, 'update'])->name('seo.update');
+        
+            Route::get('settings', [SeoSettingController::class, 'Settingedit'])->name('settings.edit');
+            Route::post('settings', [SeoSettingController::class, 'Settingupdate'])->name('settings.update');
         });
     });
 
