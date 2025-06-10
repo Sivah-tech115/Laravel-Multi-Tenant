@@ -11,10 +11,12 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Http\Controllers\ProductImportController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\FeedSourceController;
 use App\Http\Controllers\Website\WebsiteController;
 use App\Http\Controllers\SeoSettingController;
 use App\Jobs\SeedTenantLang;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Response;
 /*
 |--------------------------------------------------------------------------
 | Tenant Routes
@@ -39,11 +41,29 @@ Route::middleware([
     });
     */
 
+    Route::get('/sitemap.xml', function () {
+        $tenantId = tenant('id');
+        $sitemapIndexPath = public_path('sitemaps/sitemap_' . $tenantId . '/sitemap_index.xml');
+  
+        $files = glob($sitemapIndexPath);
+        if (!empty($files)) {
+            usort($files, function ($a, $b) {
+                return filemtime($b) - filemtime($a);
+            });
+    
+            return Response::file($files[0], [
+                'Content-Type' => 'application/xml',
+            ]);
+        }
+    
+        return response('Sitemap not found', 404);
+    });
+    
 
     Route::get('/', [WebsiteController::class, 'index'])->name('tanant.website');
     Route::get('product-category/{categorySlug}/{subcategorySlug2?}/{subcategorySlug3?}', [WebsiteController::class, 'categoryProducts'])->name('category.product');
 
-    Route::get('product/{productSlug}', [WebsiteController::class, 'singleProduct'])->name('single.product');
+    Route::get('product/{slug}', [WebsiteController::class, 'singleProduct'])->name('single.product');
 
     Route::get('/dashboard', [ProductImportController::class, 'showForm'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -76,6 +96,14 @@ Route::middleware([
         
             Route::get('settings', [SeoSettingController::class, 'Settingedit'])->name('settings.edit');
             Route::post('settings', [SeoSettingController::class, 'Settingupdate'])->name('settings.update');
+       
+            Route::get('/feeds', [FeedSourceController::class, 'index'])->name('admin.feeds.index');
+            Route::post('/feeds', [FeedSourceController::class, 'store'])->name('admin.feeds.store');
+            Route::get('/feeds/{feed}/view', [FeedSourceController::class, 'viewFeed'])->name('admin.feeds.view');
+            Route::post('/feeds/import', [FeedSourceController::class, 'import'])->name('admin.feeds.import');
+        
+       
+       
         });
     });
 

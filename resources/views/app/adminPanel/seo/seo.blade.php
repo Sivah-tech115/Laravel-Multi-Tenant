@@ -25,7 +25,7 @@
                 <form action="{{ route('seo.update') }}" method="POST">
                     @csrf
                     @method('PUT')
-    
+
                     <div class="mb-3">
                         <label class="form-label">Header Scripts (inside &lt;/head&gt;):</label>
                         <textarea rows="10" cols="50" class="form-control" aria-label="With textarea" name="header_scripts">{{ old('header_scripts', $seo->header_scripts) }}</textarea>

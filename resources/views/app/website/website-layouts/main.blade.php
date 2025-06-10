@@ -42,7 +42,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.js"></script>
-
+    @yield('scripts') <!-- All JS goes here -->
     <script src="{{ asset('../../tenant/assets/js/script.js') }}"></script>
     {!! App\Models\SeoSetting::first()->footer_scripts ?? '' !!}
 </body>

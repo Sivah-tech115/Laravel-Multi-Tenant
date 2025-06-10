@@ -11,7 +11,12 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Models\Subcategory;
 use App\Models\Import;
+use League\Csv\Statement;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 class ProcessPendingImports extends Command
 {
@@ -61,10 +66,10 @@ class ProcessPendingImports extends Command
         $this->info("Starting Awin import for import ID {$import->id}");
 
         try {
+
             $import->update(['status' => 'processing']);
 
-            // Get the zipUrl from the import model
-            $zipUrl = $import->zip_url; // Adjust this based on your actual field name
+            $zipUrl = $import->zip_url;
 
             if (empty($zipUrl)) {
                 Log::error("Missing zip URL for import ID: {$import->id}");
@@ -75,16 +80,14 @@ class ProcessPendingImports extends Command
                 return;
             }
 
-            $this->info("download process started");
-            // Download ZIP file
+            $this->info("Downloading ZIP file...");
+
             $zipContents = file_get_contents($zipUrl);
             $zipFileName = 'awinfeed_' . time() . '.zip';
             Storage::disk('local')->put($zipFileName, $zipContents);
-
             $zipPath = storage_path('app/' . $zipFileName);
 
-            $this->info("zip Extract start");
-            // Extract ZIP
+            $this->info("Extracting ZIP file...");
             $zip = new ZipArchive;
             if ($zip->open($zipPath) === TRUE) {
                 $extractFolder = storage_path('app/awinfeed_extract_' . time());
@@ -92,105 +95,171 @@ class ProcessPendingImports extends Command
                 $zip->extractTo($extractFolder);
                 $zip->close();
             } else {
-                $errorMsg = 'Failed to open ZIP file.';
-                Log::error($errorMsg);
-                $import->update([
-                    'status' => 'failed',
-                    'log' => $errorMsg,
-                ]);
+                $import->update(['status' => 'failed', 'log' => 'Failed to open ZIP file.']);
                 return;
             }
 
-            // Find CSV file in extracted folder
 
-            $this->info("Find CSV file in extracted folder");
-
+            // $extractFolder = storage_path('app/awinfeed_extract_1749189059');
 
             $csvFiles = glob($extractFolder . '/*.csv');
             if (empty($csvFiles)) {
-                $errorMsg = 'No CSV file found inside ZIP.';
-                Log::error($errorMsg);
-                $import->update([
-                    'status' => 'failed',
-                    'log' => $errorMsg,
-                ]);
+                $import->update(['status' => 'failed', 'log' => 'No CSV file found inside ZIP.']);
                 return;
             }
+
             $csvPath = $csvFiles[0];
-
-            $this->info("Parse CSV");
-
-            // Parse CSV
             $csv = Reader::createFromPath($csvPath, 'r');
             $csv->setDelimiter(';');
             $csv->setHeaderOffset(0);
-            $records = $csv->getRecords();
 
+            $offset = 0;
+            $batchSize = 300;
             $importCount = 0;
-            $index = 0;
 
+            $this->info("Starting CSV import in chunks of {$batchSize}...");
 
-            $this->info("record start imported");
+            do {
+                $stmt = (new Statement())->offset($offset)->limit($batchSize);
+                $records = iterator_to_array($stmt->process($csv));
 
-            foreach ($records as $record) {
-                // $this->info(json_encode($record, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+                if (empty($records)) {
+                    break;
+                }
 
-                try {
-                    $index++;
+                $productBatch = [];
 
-                    // Log::info("Processing record #{$index}", $record);
-
-                    // Validate essential fields
+                foreach ($records as $record) {
                     if (empty($record['aw_product_id'])) {
-                        Log::warning("Skipping record #{$index} - missing aw_product_id");
                         continue;
                     }
 
-                    // Initialize merchant, category, and brand as null
-                    $merchant = $category = $brand = null;
+                    try {
+                        // Initialize merchant, category, and brand as null
+                        $merchant = $category = $brand = null;
 
-                    if (!empty($record['brand_id'])) {
-                        $brand = Brand::updateOrCreate(
-                            ['brand_id' => $record['brand_id']],
-                            [
-                                'brand_name' => $record['brand_name'] ?? null,
-                                'import_id' => $import->id ?? null
-                            ]
-                        );
-                    }
+                        if (!empty($record['brand_id'])) {
+                            $brandName = $record['brand_name'] ?? 'unknown-brand';
+                            $brand = Brand::updateOrCreate(
+                                ['brand_id' => $record['brand_id']],
+                                [
+                                    'brand_name' => $brandName,
+                                    'import_id' => $import->id ?? null,
+                                    'slug' => Str::slug($brandName),
+                                    'meta_title' => $brandName,
+                                    'keyword' => $brandName,
+                                    'status' => $import->reimport_status == 1 ? '1' : '0',
+                                ]
+                            );
+                        }
 
-                    if (!empty($record['category_id'])) {
-                        $category = Category::updateOrCreate(
-                            ['category_id' => $record['category_id']],
-                            [
-                                'category_name' => $record['category_name'] ?? null,
-                                'import_id' => $import->id ?? null
-                            ]
-                        );
-                    }
+                        if (!empty($record['category_id'])) {
+                            $categoryName = $record['category_name'] ?? 'unknown-category';
+                            $category = Category::updateOrCreate(
+                                ['category_id' => $record['category_id']],
+                                [
+                                    'category_name' => $categoryName,
+                                    'import_id' => $import->id ?? null,
+                                    'slug' => Str::slug($categoryName),
+                                    'meta_title' => $categoryName,
+                                    'keyword' => $categoryName,
+                                    'status' => $import->reimport_status == 1 ? '1' : '0',
+                                ]
+                            );
+                        }
 
-                    if (!empty($record['merchant_id'])) {
-                        $merchant = Merchant::updateOrCreate(
-                            ['merchant_id' => $record['merchant_id']],
-                            [
-                                'merchant_name' => $record['merchant_name'] ?? null,
-                                'import_id' => $import->id ?? null
-                            ]
-                        );
-                    }
+                        if (!empty($record['merchant_id'])) {
+                            $merchantName = $record['merchant_name'] ?? 'unknown-merchant';
+                            $merchant = Merchant::updateOrCreate(
+                                ['merchant_id' => $record['merchant_id']],
+                                [
+                                    'merchant_name' => $merchantName,
+                                    'import_id' => $import->id ?? null,
+                                    'slug' => Str::slug($merchantName),
+                                    'meta_title' => $merchantName,
+                                    'keyword' => $merchantName,
+                                    'status' => $import->reimport_status == 1 ? '1' : '0',
+                                ]
+                            );
 
-                    if (!empty($record['aw_product_id'])) {
 
-                        Product::updateOrCreate(
-                            ['aw_product_id' => $record['aw_product_id']], // Match by AW product ID
-                            [
-                                'import_id' => $import->id ?? null,
+                            $categoryString = $record['merchant_category'] ?? null;
+
+                            if ($categoryString) {
+                                if (strpos($categoryString, '>') !== false) {
+                                    // Case 1: Category string with '>' separator (hierarchy)
+                                    $categories = array_map('trim', explode('>', $categoryString));
+
+                                    // Remove first category dynamically
+                                    array_shift($categories);
+
+                                    $parentCategory = null;
+
+                                    foreach ($categories as $categoryName) {
+                                        $subcategory = Subcategory::updateOrCreate(
+                                            [
+                                                'name' => $categoryName,
+                                                'merchant_id' => $record['merchant_id'],
+                                                'parent_id' => $parentCategory ? $parentCategory->id : null,
+                                            ],
+                                            [
+                                                'import_id' => $import->id ?? null,
+                                                'slug' => Str::slug($categoryName),
+                                                'meta_title' => $categoryName,
+                                                'keyword' => $categoryName,
+                                                'status' => $import->reimport_status == 1 ? '1' : '0',
+                                            ]
+                                        );
+
+                                        $parentCategory = $subcategory;
+                                    }
+                                } else {
+                                    // Case 2: Single category (no '>')
+                                    $categoryName = trim($categoryString);
+
+                                    Subcategory::updateOrCreate(
+                                        [
+                                            'name' => $categoryName,
+                                            'merchant_id' => $record['merchant_id'],
+                                            'parent_id' => null,  // no parent because single category
+                                        ],
+                                        [
+                                            'import_id' => $import->id ?? null,
+                                            'slug' => Str::slug($categoryName),
+                                            'meta_title' => $categoryName,
+                                            'keyword' => $categoryName,
+                                            'status' => $import->reimport_status == 1 ? '1' : '0',
+                                        ]
+                                    );
+                                }
+                            }
+                        }
+
+
+
+                        if (!empty($record['aw_product_id'])) {
+                            // Prepare product batch
+
+                            $productTitle = $record['product_name'] ?? 'untitled-product';
+                            $productDescription = $record['description'] ?? null;
+                            $shortTitle = Str::words($productTitle, 40, '');
+                            $merchantName = $record['merchant_name'] ?? 'unknown-merchant';
+
+                            $productBatch[] = [
+                                'aw_product_id' => $record['aw_product_id'],
+                                'import_id' => $import->id,
+                                'slug' => Str::slug($productTitle) .'-'. substr($record['aw_product_id'], -3),
+                                'description' => $productDescription,
+                                'meta_title' => $productTitle,
+                                'meta_description' => $productDescription ? Str::words($productDescription, 30, '...') : null,
+                                'keyword' => $shortTitle,
                                 'product_name' => $record['product_name'] ?? null,
                                 'aw_deep_link' => $record['aw_deep_link'] ?? null,
                                 'merchant_product_id' => $record['merchant_product_id'] ?? null,
                                 'merchant_image_url' => $record['merchant_image_url'] ?? null,
                                 'description' => $record['description'] ?? null,
                                 'merchant_category' => $record['merchant_category'] ?? null,
+                                'merchant_category_slug' => str::slug($record['merchant_category']) ?? null,
                                 'search_price' => $record['search_price'] ?? null,
                                 'aw_image_url' => $record['aw_image_url'] ?? null,
                                 'currency' => $record['currency'] ?? null,
@@ -267,36 +336,162 @@ class ProcessPendingImports extends Command
                                 'merchant_id' => isset($merchant) && isset($merchant->id) ? $merchant->id : null,
                                 'category_id' => isset($category) && isset($category->id) ? $category->id : null,
                                 'brand_id' => isset($brand) && isset($brand->id) ? $brand->id : null,
-                            ]
-                        );
+                                'status' => $import->reimport_status == 1 ? '1' : '0',
+                            ];
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Error processing record: " . $e->getMessage(), $record);
+                        continue;
                     }
-
-                    $importCount++;
-                } catch (\Exception $e) {
-                    Log::error("Error on record #{$index}: " . $e->getMessage(), $record);
-                    continue; // Skip to next record
                 }
+
+                // Upsert product batch
+                if (!empty($productBatch)) {
+                    Product::upsert($productBatch, ['aw_product_id'], [
+                        'slug',
+                        'meta_title',
+                        'meta_description',
+                        'keyword',
+                        'import_id',
+                        'product_name',
+                        'aw_deep_link',
+                        'merchant_product_id',
+                        'merchant_image_url',
+                        'description',
+                        'merchant_category',
+                        'search_price',
+                        'merchant_id',
+                        'category_id',
+                        'aw_image_url',
+                        'currency',
+                        'store_price',
+                        'delivery_cost',
+                        'merchant_deep_link',
+                        'language',
+                        'last_updated',
+                        'display_price',
+                        'data_feed_id',
+                        'brand_id',
+                        'colour',
+                        'product_short_description',
+                        'specifications',
+                        'condition',
+                        'product_model',
+                        'model_number',
+                        'dimensions',
+                        'keywords',
+                        'promotional_text',
+                        'product_type',
+                        'commission_group',
+                        'merchant_product_category_path',
+                        'merchant_product_second_category',
+                        'merchant_product_third_category',
+                        'rrp_price',
+                        'saving',
+                        'savings_percent',
+                        'base_price',
+                        'base_price_amount',
+                        'base_price_text',
+                        'product_price_old',
+                        'delivery_restrictions',
+                        'delivery_weight',
+                        'warranty',
+                        'terms_of_contract',
+                        'delivery_time',
+                        'in_stock',
+                        'stock_quantity',
+                        'valid_from',
+                        'valid_to',
+                        'is_for_sale',
+                        'web_offer',
+                        'pre_order',
+                        'stock_status',
+                        'size_stock_status',
+                        'size_stock_amount',
+                        'merchant_thumb_url',
+                        'large_image',
+                        'alternate_image',
+                        'aw_thumb_url',
+                        'alternate_image_two',
+                        'alternate_image_three',
+                        'alternate_image_four',
+                        'reviews',
+                        'average_rating',
+                        'rating',
+                        'number_available',
+                        'custom_1',
+                        'custom_2',
+                        'custom_3',
+                        'custom_4',
+                        'custom_5',
+                        'custom_6',
+                        'custom_7',
+                        'custom_8',
+                        'custom_9',
+                        'ean',
+                        'isbn',
+                        'upc',
+                        'mpn',
+                        'parent_product_id',
+                        'product_GTIN',
+                        'basket_link'
+                    ]);
+                    $importCount += count($productBatch);
+                }
+
+                $offset += $batchSize;
+
+                //  Log::info("Process import ID: {$import->id}, Offset: {$offset}...");
+                DB::table('imports')->where('id', $import->id)
+                    ->update(['log' => 'Imported products: ' . $offset]);
+            } while (count($records) > 0);
+
+            if ($import->reimport_status == 1) {
+
+                // Delete old unused records
+                DB::table('products')
+                    ->where('import_id', $import->id)
+                    ->where('status', '0')
+                    ->delete();
+
+                DB::table('merchants')
+                    ->where('import_id', $import->id)
+                    ->where('status', '0')
+                    ->delete();
+
+                DB::table('categories')
+                    ->where('import_id', $import->id)
+                    ->where('status', '0')
+                    ->delete();
+
+                DB::table('brands')
+                    ->where('import_id', $import->id)
+                    ->where('status', '0')
+                    ->delete();
+
+                DB::table('products')->where('import_id', $import->id)->update(['status' => '0']);
+                DB::table('merchants')->where('import_id', $import->id)->update(['status' => '0']);
+                DB::table('categories')->where('import_id', $import->id)->update(['status' => '0']);
+                DB::table('brands')->where('import_id', $import->id)->update(['status' => '0']);
             }
 
-            // Cleanup files
             unlink($zipPath);
-            // Recursively delete extract folder
             $this->deleteDirectory($extractFolder);
-
-            // Log::info("Awin feed import completed: {$importCount} products processed.");
 
             $import->update([
                 'status' => 'completed',
+                'reimport_status' => '0',
                 'log' => "Successfully imported {$importCount} products",
             ]);
         } catch (\Exception $e) {
-            Log::error('ImportAwinFeedJob error: ' . $e->getMessage());
+            Log::error("processAwinImport error: " . $e->getMessage());
             $import->update([
                 'status' => 'failed',
                 'log' => $e->getMessage(),
             ]);
         }
     }
+
 
     /**
      * Recursively delete a directory
@@ -323,6 +518,4 @@ class ProcessPendingImports extends Command
 
         return rmdir($dir);
     }
-
-    
 }

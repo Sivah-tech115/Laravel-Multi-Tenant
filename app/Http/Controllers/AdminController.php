@@ -93,7 +93,7 @@ class AdminController extends Controller
                 'id' => $product->id,
                 'product_name' => $product->product_name,
                 'slug' => $product->slug,
-                'action' => '<a href="' . route('single.product', $product->slug) . '" class="btn btn-sm btn-primary">View</a>',
+                'action' => '<a href="' . route('single.product', $product->slug) . '" class="btn btn-sm btn-primary" target="_blank">View</a>',
             ];
         });
 

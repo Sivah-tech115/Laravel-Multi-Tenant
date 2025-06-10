@@ -14,7 +14,7 @@
             <h5>Quick Links</h5>
             <ul class="footer_list">
                 <li class="menu_item"><a href="{{route('tanant.website')}}">Shop</a></li>
-                <li class="menu_item"><a href="{{route('categories.all')}}">All Product Categories</a></li>
+                <li class="menu_item"><a href="{{route('categories.all')}}">{{ t('product.All_Product_Categories') }}</a></li>
             </ul>
         </div>
 
@@ -166,15 +166,15 @@
 
 <div class="search_modal">
     <span class="close_modal"><i class="fa-solid fa-xmark"></i></span>
-    <h4>What are you looking for?</h4>
+    <h4>{{ t('product.What_are_you_looking_for') }}</h4>
     <form action="{{ route('tanant.website') }}" method="GET" class="search_form">
         <div class="form_control">
-            <input type="text" id="search" name="query" value="{{request()->query('query')}}" placeholder="Enter your search term" class="form_control" required>
+            <input type="text" id="search" name="query" value="{{request()->query('query')}}" placeholder="{{ t('product.Enter_your_search_term') }}" class="form_control" required>
             <svg aria-hidden="true" fill="none" focusable="false" width="24" class="svg-search" viewBox="0 0 24 24">
                 <path d="M10.364 3a7.364 7.364 0 1 0 0 14.727 7.364 7.364 0 0 0 0-14.727Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10"></path>
                 <path d="M15.857 15.858 21 21.001" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round"></path>
             </svg>
         </div>
-        <button type="submit" class="btn secondary_btn">Search</button>
+        <button type="submit" class="btn secondary_btn">{{ t('product.search') }}</button>
     </form>
 </div>

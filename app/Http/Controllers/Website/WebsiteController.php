@@ -22,19 +22,46 @@ class WebsiteController extends Controller
 
     public function __construct()
     {
-        $domain = tenant()->domains[0]['domain'] ?? 'en.localhost';
-        $this->langCode = explode('.', $domain)[0] ?? 'en';
-        $this->targetLocale = $this->langCode;
-    }
+        $this->middleware(function ($request, $next) {
+            $this->langCode = tenant()->language ?? 'en';
+            $this->targetLocale = $this->langCode;
 
+            return $next($request);
+        });
+    }
 
     public function index(Request $request)
     {
+        // dd($this->targetLocale);
         $sorting = $request->input('sorting', 'popularity');
         $query = $request->input('query');
         $merchantquery = $request->query('merchant');
         $page = $request->input('page', 1);
-        SeedTenantLang::dispatchSync();
+        // SeedTenantLang::dispatchSync();
+        $translations = include resource_path('lang/tenant/en_translations.php');
+
+        $insertData = [];
+        foreach ($translations as $key => $value) {
+            $exists = DB::table('translations')
+                ->where('locale', 'en')
+                ->where('key', $key)
+                ->exists();
+
+            if (!$exists) {
+                $insertData[] = [
+                    'locale' => 'en',
+                    'key' => $key,
+                    'value' => $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        if (!empty($insertData)) {
+            DB::table('translations')->insert($insertData);
+        }
+
 
         if ($this->targetLocale !== 'en') {
             $baseTranslations = DB::table('translations')->where('locale', 'en')->get();
@@ -142,7 +169,7 @@ class WebsiteController extends Controller
     public function categoryProducts(Request $request, $categorySlug, $subcategorySlug2 = null, $subcategorySlug3 = null)
     {
         $sorting = $request->input('sorting', 'popularity');
- 
+
         $categorySessionKey = "merchant_{$this->langCode}_{$categorySlug}";
         $category = session()->get($categorySessionKey);
 
@@ -250,13 +277,13 @@ class WebsiteController extends Controller
 
 
 
-    public function singleProduct(Request $request, $productSlug)
+    public function singleProduct(Request $request, $slug)
     {
-        $sessionKey = "product_{$this->langCode}_{$productSlug}";
+        $sessionKey = "product_{$this->langCode}_{$slug}";
         $product = session()->get($sessionKey);
 
         if (!$product) {
-            $product = Product::where('slug', $productSlug)->firstOrFail();
+            $product = Product::where('slug', $slug)->firstOrFail();
             session()->put($sessionKey, $product);
         }
 
@@ -264,7 +291,7 @@ class WebsiteController extends Controller
         $categorySlug = $product->merchant_category_slug;
 
         $relatedProducts = Product::where('merchant_id', $merchantId)
-            ->where('slug', '!=', $productSlug)
+            ->where('slug', '!=', $slug)
             ->orWhere('merchant_category_slug', $categorySlug)
             ->with('brand')
             ->take(10)
@@ -278,10 +305,4 @@ class WebsiteController extends Controller
         $merchants = Merchant::paginate(2);
         return view('app.website.pages.categories', compact('merchants'));
     }
-
-
-
-
-
-
 }

@@ -1,6 +1,6 @@
 @extends('app.layouts_copy.main')
 @section('breadcrumbtitle', 'Feeds')
-@section('breadcrumbtitle2', 'Import Feed')
+@section('breadcrumbtitle2', 'Feed Manager')
 
 @section('styles')
 <style>
@@ -51,13 +51,13 @@
         <div class="col-12 mb-3">
             <div class="card">
                 <div class="card-header">
-                    <h5>Feed Import</h5>
+                    <h5>Bulk Feed Import</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('import.submit') }}">
+                    <form method="POST" action="{{ route('admin.feeds.store') }}">
                         @csrf
                         <div class="mb-3">
-                            <label for="name" class="form-label">Enter ZIP feed URL:</label>
+                            <label for="name" class="form-label">Enter feed URL:</label>
                             <textarea rows="10" cols="50" class="form-control" aria-label="With textarea" name="zip_url"></textarea>
 
                         </div>
@@ -72,27 +72,18 @@
                         <table id="simpletable" class="table table-bordered w-100">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th class="width60">ZIP URL</th>
-                                    <th>Status</th>
-                                    <th>Created At</th>
+                                    <th>Url</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($imports as $import)
+                                @foreach($feeds as $feed)
                                 <tr>
-                                    <td>{{ $import->id }}</td>
-                                    <td class="width60"><a href="{{ $import->zip_url }}" target="_blank">{{ $import->zip_url}}</a></td>
-                                    <td class="status {{ strtolower($import->status) }}">{{ ucfirst($import->status) }}</td>
-                                    <td>{{ $import->created_at }}</td>
+                                    <td>{{ $feed->zip_url }}</td>
                                     <td>
-                                        <form method="POST" action="{{ route('import.reset', $import->id) }}">
-                                            @csrf
-                                            <button class="btn btn-warning btn-sm" type="submit">Re-import</button>
-                                        </form>
+                                        <a href="{{ route('admin.feeds.view', $feed) }}">View</a>
+                               
                                     </td>
-
                                 </tr>
                                 @endforeach
                             </tbody>

@@ -30,7 +30,7 @@ p, a, ul, span, button {
     text-decoration: none;
 }
 h1{
-    font-size: 65px;
+    font-size: 50px;
     font-weight: 500;
     line-height: 1.1;
     text-transform: capitalize;
@@ -341,7 +341,7 @@ footer .payment_links svg {
     align-items: end;
 }
 .hero_banner {
-    min-height: 420px;
+    min-height: 320px;
 }
 .banner_bg {
     background: url(../images/banner-img-1.webp) no-repeat;
@@ -556,10 +556,21 @@ footer .payment_links svg {
     gap: 10px;
     text-align: center;
 }
+.pro_content h5 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 58px;
+}
+.relatedpro_slider .pro_content h5 {
+    -webkit-line-clamp: 1;
+}
 .product_grid {
     display: flex;
     gap: 30px;
     flex-wrap: wrap;
+    margin-bottom: 0;
 }
 .pro_box {
     width: calc(100% / 4 - 22.5px);
@@ -572,6 +583,8 @@ footer .payment_links svg {
 }
 .pro_box .pro_img img {
     border-radius: 20px;
+    height: 200px;
+    object-fit: contain;
 }
 .pro_img {
     position: relative;
@@ -675,6 +688,9 @@ footer .payment_links svg {
 .slick-dots li.slick-active button:hover:before,
 .slick-dots li button:before {
     color: var(--primary_color) !important;
+}
+.related_pro_section .slick-dots {
+    bottom: -50px;
 }
 /*********************** search modal css ************************/
 .search_modal {
@@ -940,5 +956,9 @@ body:has(ul.main_menu.active) {
     }
     .banner_txt {
         max-width: 100%;
+    }
+    .pro_content h5 {
+        display: block;
+        min-height: auto;
     }
 }

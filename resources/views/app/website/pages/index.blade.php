@@ -4,9 +4,9 @@
 <section class="page_banner banner_bg hero_banner">
     <div class="container">
         <div class="banner_txt">
-            <h1>Everything You Need – All in One Place!</span></h1>
-            <p>From cutting-edge electronics to trendy fashion, smart gadgets, and must-haves for kids – shop the best at unbeatable prices.</p>
-            <a href="{{route('categories.all')}}" class="btn white_btn">View Product Categories</a>
+            <h1>{{ t('product.Everything_You_Need') }}</span></h1>
+            <p>{{ t('product.From_cutting_edge') }}</p>
+            <a href="{{route('categories.all')}}" class="btn white_btn">{{ t('product.View_Product_Categories') }}</a>
         </div>
     </div>
 </section>

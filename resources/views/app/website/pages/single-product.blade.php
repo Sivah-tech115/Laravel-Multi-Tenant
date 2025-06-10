@@ -33,32 +33,32 @@
                 <span>/</span>
                 @endif
                 <span>{{$product->product_name}}</span>
-                
+
             </div>
 
             <h2>{{$product->product_name}}</h2>
             <span class="pro_price regu_price">€ {{$product->search_price}}</span>
             @if(!empty($product->brand->brand_name))
-                <span class="Pro_meta">Brand: {{$product->brand->brand_name}}</span>
+            <span class="Pro_meta">Brand: {{$product->brand->brand_name}}</span>
             @endif
             <p class="pro_description">{{$product->description}}</p>
-            <a href="{{$product->merchant_deep_link}}" target="_blank" class="btn">View Offer</a>
+            <a href="{{$product->merchant_deep_link}}" target="_blank" class="btn">{{ t('product.view_offer') }}</a>
         </div>
     </div>
 </section>
 <section class="related_pro_section">
     <div class="container">
-        <h2>Related Products</h2>
+        <h2>{{ t('product.related_Products') }}</h2>
         <ul class="product_grid relatedpro_slider">
             @foreach($relatedProducts as $relatedProduct)
             <li class="pro_box">
-                <a href="{{ route('single.product', ['productSlug' => $relatedProduct->slug]) }}" class="pro_img">
+                <a href="{{ route('single.product', ['slug' => $relatedProduct->slug]) }}" class="pro_img">
                     <img src="{{ $relatedProduct->merchant_image_url }}" alt="">
                 </a>
                 <div class="pro_content">
-                    <h5><a href="{{ route('single.product', ['productSlug' => $relatedProduct->slug]) }}">{{ $relatedProduct->product_name }}</a></h5>
+                    <h5><a href="{{ route('single.product', ['slug' => $relatedProduct->slug]) }}">{{ $relatedProduct->product_name }}</a></h5>
                     <span class="pro_price regu_price">€{{ $relatedProduct->search_price }}</span>
-                    <a href="{{$relatedProduct->merchant_deep_link}}" target="_blank">View Offer</a>
+                    <a href="{{$relatedProduct->merchant_deep_link}}" target="_blank" class="btn">{{ t('product.view_offer') }}</a>
                 </div>
             </li>
 
@@ -67,5 +67,49 @@
     </div>
 </section>
 
+
+@endsection
+
+@section('scripts')
+<script>
+    // Get the count of related products from Blade
+    let relatedProductsCount = {{ count($relatedProducts) }};
+
+    // Determine how many slides to show, max 4
+    let slidesToShow = relatedProductsCount >= 4 ? 4 : relatedProductsCount;
+
+    $('.relatedpro_slider').slick({
+        dots: true,
+        arrows: false,
+        infinite: true,
+        autoplay: true,
+        autoplaySpeed: 2000,
+        slidesToShow: slidesToShow,
+        slidesToScroll: 1,
+        responsive: [
+            {
+                breakpoint: 1025,
+                settings: {
+                    slidesToShow: Math.min(slidesToShow, 3),
+                    slidesToScroll: 1,
+                }
+            },
+            {
+                breakpoint: 769,
+                settings: {
+                    slidesToShow: Math.min(slidesToShow, 2),
+                    slidesToScroll: 1
+                }
+            },
+            {
+                breakpoint: 601,
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1
+                }
+            }
+        ]
+    });
+</script>
 
 @endsection

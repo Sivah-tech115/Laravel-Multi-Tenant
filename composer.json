@@ -12,6 +12,7 @@
         "laravel/tinker": "^2.8",
         "league/csv": "*",
         "spatie/laravel-permission": "^6.2",
+        "spatie/laravel-sitemap": "^7.3",
         "stancl/tenancy": "^3.7",
         "stichoza/google-translate-php": "^5.2"
     },

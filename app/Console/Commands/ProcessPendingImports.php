@@ -17,6 +17,7 @@ use League\Csv\Statement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use finfo;
 
 class ProcessPendingImports extends Command
 {
@@ -80,37 +81,108 @@ class ProcessPendingImports extends Command
                 return;
             }
 
-            $this->info("Downloading ZIP file...");
 
-            $zipContents = file_get_contents($zipUrl);
-            $zipFileName = 'awinfeed_' . time() . '.zip';
-            Storage::disk('local')->put($zipFileName, $zipContents);
-            $zipPath = storage_path('app/' . $zipFileName);
 
-            $this->info("Extracting ZIP file...");
-            $zip = new ZipArchive;
-            if ($zip->open($zipPath) === TRUE) {
+            $this->info("Downloading file...");
+            $fileContents = file_get_contents($zipUrl);
+
+            if ($fileContents === false) {
+                $import->update(['status' => 'failed', 'log' => 'Failed to download file']);
+                return;
+            }
+            $tempFileName = 'awinfeed_' . time();
+            $tempFilePath = storage_path('app/' . $tempFileName);
+            Storage::disk('local')->put($tempFileName, $fileContents);
+
+            // Detect MIME type using finfo
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($tempFilePath);
+
+            $this->info("Detected MIME type: $mimeType");
+
+            // Determine extension from MIME type
+            $extension = null;
+            if ($mimeType === 'application/zip') {
+                $extension = 'zip';
+            } elseif (in_array($mimeType, ['application/gzip', 'application/x-gzip'])) {
+                $extension = 'gz';
+            } elseif ($mimeType === 'text/csv' || $mimeType === 'text/plain') {
+                $extension = 'csv';
+            } else {
+                $import->update(['status' => 'failed', 'log' => 'Unsupported file MIME type: ' . $mimeType]);
+                return;
+            }
+
+            // Rename file with correct extension
+            $fileName = $tempFileName . '.' . $extension;
+            $filePath = storage_path('app/' . $fileName);
+            Storage::disk('local')->move($tempFileName, $fileName);
+
+            if ($extension === 'zip') {
+                // Extract ZIP
+                $zip = new ZipArchive;
+                if ($zip->open($filePath) === TRUE) {
+                    $extractFolder = storage_path('app/awinfeed_extract_' . time());
+                    mkdir($extractFolder, 0755, true);
+                    $zip->extractTo($extractFolder);
+                    $zip->close();
+
+                    $csvFiles = glob($extractFolder . '/*.csv');
+                    if (empty($csvFiles)) {
+                        $import->update(['status' => 'failed', 'log' => 'No CSV file found inside ZIP.']);
+                        return;
+                    }
+                    $csvPath = $csvFiles[0];
+                    // Continue processing CSV
+                } else {
+                    $import->update(['status' => 'failed', 'log' => 'Failed to open ZIP file.']);
+                    return;
+                }
+            } elseif ($extension === 'gz') {
+                // Decompress GZ (same as before)
                 $extractFolder = storage_path('app/awinfeed_extract_' . time());
                 mkdir($extractFolder, 0755, true);
-                $zip->extractTo($extractFolder);
-                $zip->close();
-            } else {
-                $import->update(['status' => 'failed', 'log' => 'Failed to open ZIP file.']);
-                return;
+
+                $csvFilePath = $extractFolder . '/' . pathinfo($fileName, PATHINFO_FILENAME);
+
+                $gz = gzopen($filePath, 'rb');
+                if (!$gz) {
+                    $import->update(['status' => 'failed', 'log' => 'Failed to open GZ file.']);
+                    return;
+                }
+
+                $outFile = fopen($csvFilePath, 'wb');
+                if (!$outFile) {
+                    $import->update(['status' => 'failed', 'log' => 'Failed to create output CSV file.']);
+                    gzclose($gz);
+                    return;
+                }
+
+                while (!gzeof($gz)) {
+                    fwrite($outFile, gzread($gz, 4096));
+                }
+
+                gzclose($gz);
+                fclose($outFile);
+
+                $csvPath = $csvFilePath;
+                // Continue CSV processing
+            } elseif ($extension === 'csv') {
+                // If file is CSV directly, no extraction needed
+                $csvPath = $filePath;
+                // Continue CSV processing
             }
 
-
-            // $extractFolder = storage_path('app/awinfeed_extract_1749189059');
-
-            $csvFiles = glob($extractFolder . '/*.csv');
-            if (empty($csvFiles)) {
-                $import->update(['status' => 'failed', 'log' => 'No CSV file found inside ZIP.']);
-                return;
-            }
-
-            $csvPath = $csvFiles[0];
             $csv = Reader::createFromPath($csvPath, 'r');
-            $csv->setDelimiter(';');
+
+            $sample = file_get_contents($csvPath, false, null, 0, 1024);
+            $commaCount = substr_count($sample, ',');
+            $semicolonCount = substr_count($sample, ';');
+
+            $delimiter = $commaCount > $semicolonCount ? ',' : ';';
+
+            $csv->setDelimiter($delimiter);
+
             $csv->setHeaderOffset(0);
 
             $offset = 0;
@@ -128,11 +200,14 @@ class ProcessPendingImports extends Command
                 }
 
                 $productBatch = [];
-
+                // Use reset() to get first record safely regardless of keys
+                // $firstRecord = reset($records);
+                // dump($firstRecord);
                 foreach ($records as $record) {
                     if (empty($record['aw_product_id'])) {
                         continue;
                     }
+
 
                     try {
                         // Initialize merchant, category, and brand as null
@@ -248,7 +323,7 @@ class ProcessPendingImports extends Command
                             $productBatch[] = [
                                 'aw_product_id' => $record['aw_product_id'],
                                 'import_id' => $import->id,
-                                'slug' => Str::slug($productTitle) .'-'. substr($record['aw_product_id'], -3),
+                                'slug' => Str::slug($productTitle) . '-' . substr($record['aw_product_id'], -3),
                                 'description' => $productDescription,
                                 'meta_title' => $productTitle,
                                 'meta_description' => $productDescription ? Str::words($productDescription, 30, '...') : null,
@@ -475,8 +550,18 @@ class ProcessPendingImports extends Command
                 DB::table('brands')->where('import_id', $import->id)->update(['status' => '0']);
             }
 
-            unlink($zipPath);
-            $this->deleteDirectory($extractFolder);
+
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+
+            if (file_exists($csvPath)) {
+                unlink($csvPath); 
+            }
+
+            if (is_dir($extractFolder)) {
+                $this->deleteDirectory($extractFolder);
+            }
 
             $import->update([
                 'status' => 'completed',

@@ -11,13 +11,23 @@ class Tenant extends BaseTenant implements TenantWithDatabase
 {
     use HasDatabase, HasDomains;
 
+    protected $fillable = [
+        'name',
+        'email',
+        'domain_name',
+        'password',
+        'language',
+        // and any other columns in tenants table you want to mass assign
+    ];
+
     public static function getCustomColumns(): array
     {
         return [
             'id',
             'name',
             'email',
-            'password'
+            'password',
+            'language'
         ];
     }
 

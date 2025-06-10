@@ -1,36 +1,4 @@
-// Related Product Slider
-$('.relatedpro_slider').slick({
-    dots: true,
-    arrows: false,
-    infinite: true,
-    autoplay: true,
-    autoplaySpeed: 200,
-    slidesToShow: 4,
-    slidesToScroll: 1,
-    responsive: [
-        {
-            breakpoint: 1025,
-            settings: {
-                slidesToShow: 3,
-                slidesToScroll: 1,
-            }
-        },
-        {
-            breakpoint: 769,
-            settings: {
-                slidesToShow: 2,
-                slidesToScroll: 1
-            }
-        },
-        {
-            breakpoint: 601,
-            settings: {
-                slidesToShow: 1,
-                slidesToScroll: 1
-            }
-        }
-    ]
-});
+
 // Product Categories Toggle
 $(document).ready(function () {
     $('.toggle_arrow').on('click', function (e) {

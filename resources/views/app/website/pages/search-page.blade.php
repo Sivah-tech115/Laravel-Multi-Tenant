@@ -17,7 +17,7 @@
 <section class="searchresult_section">
     <div class="container">
         <div class="main_heading">
-            <h3>Search Result For: {{request()->query('query')}}</h3>
+            <h3>{{ t('product.search_result') }}: {{request()->query('query')}}</h3>
             <div class="sorting_options">
                 <form action="{{ route('tanant.website') }}" method="GET">
                     <input type="hidden" id="search" name="query" value="{{request()->query('query')}}" placeholder="Enter your search term" class="form_control" required>
@@ -39,11 +39,11 @@
             @forelse ($products as $item)
             <li class="pro_box">
                 <!-- Link to the single product page, dynamically using the product's slug -->
-                <a href="{{ route('single.product', ['productSlug' => $item->slug]) }}" class="pro_img">
+                <a href="{{ route('single.product', ['slug' => $item->slug]) }}" class="pro_img">
                     <img src="{{ $item->merchant_image_url }}" alt="{{ $item->product_name }}">
                 </a>
                 <div class="pro_content">
-                    <h5><a href="{{ route('single.product', ['productSlug' => $item->slug]) }}">{{ $item->product_name }}</a></h5>
+                    <h5><a href="{{ route('single.product', ['slug' => $item->slug]) }}">{{ $item->product_name }}</a></h5>
                     <span class="pro_price regu_price">€{{ $item->search_price }}</span>
                     <span class="pro_price regu_price" style="display: none;">{{ $item->id }}</span>
                     <a href="{{ $item->aw_deep_link }}" target="_blank" class="btn">{{ t('product.view_offer') }}</a>
@@ -51,15 +51,15 @@
             </li>
             @empty
             <li class="no_data_found">
-                <span>{{ t('No products found') }}</span>
+                <span>{{ t('product.no_data_found') }}</span>
             </li>
             @endforelse
         </ul>
 
 
-        <div class="pagination">
+        <!-- <div class="pagination"> -->
             {{ $products->appends(request()->query())->links('pagination::bootstrap-4') }}
-        </div>
+        <!-- </div> -->
 
     </div>
 </section>

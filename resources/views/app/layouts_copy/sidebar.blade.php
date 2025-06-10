@@ -64,6 +64,15 @@
                         </a>
                     </li>
 
+                    <li class="nav-item ">
+                        <a href="{{route('admin.feeds.index')}}" class="nav-link">
+                            <span class="pcoded-micon">
+                                <i class="feather icon-settings"></i>
+                            </span>
+                            <span class="pcoded-mtext">Feed Manager</span>
+                        </a>
+                    </li>
+
                 </ul>
             </div>
         </div>
